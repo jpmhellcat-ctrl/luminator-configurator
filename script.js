@@ -32,7 +32,7 @@ function changeStep(direction) {
     showStep(currentStep + direction);
 }
 
-// Zeigt Fehler an und springt zum falschen Tab
+// Zeigt Fehler beim Absenden an und springt zum falschen Tab
 document.addEventListener('invalid', function(e){
     var step = e.target.closest('.step');
     if(step) {
@@ -84,18 +84,29 @@ function exportJSON() {
 }
 
 function importJSON(event) {
+    event.stopPropagation(); // Verhindert, dass das Formular ein 'change' Event registriert
+    clearTimeout(debounceTimer); // Stoppt alle laufenden Speicher-Prozesse
+
     let file = event.target.files[0];
     if(!file) return;
+    
     let reader = new FileReader();
     reader.onload = function(e) {
         try {
             let content = e.target.result;
-            JSON.parse(content); 
+            if (!content || content.trim() === '') throw new Error("Die Datei ist leer.");
+            
+            JSON.parse(content); // Prüft, ob es valides JSON ist
+            
             localStorage.setItem('mobileConfigData', content);
             alert("Konfiguration erfolgreich importiert! Die Seite wird nun neu geladen.");
+            
+            event.target.value = ''; // Input zurücksetzen
             window.location.reload();
         } catch(err) {
-            alert("Fehler beim Lesen der Datei. Bitte stelle sicher, dass es eine gültige JSON-Datei ist.");
+            console.error("Import Fehler:", err);
+            alert("Fehler beim Lesen der Datei: " + err.message + "\nBitte stelle sicher, dass es eine gültige .json Datei ist.");
+            event.target.value = ''; 
         }
     };
     reader.readAsText(file);
@@ -186,7 +197,8 @@ function updateStepStatus(stepId) {
         }
 
         if (!el.disabled && isVisible) {
-            if (el.willValidate && !el.checkValidity()) {
+            // FIXED: Nutze .validity.valid anstatt checkValidity(), damit es nicht springt!
+            if (el.willValidate && !el.validity.valid) {
                 isValid = false;
                 break;
             }
@@ -210,6 +222,7 @@ function saveForm() {
     
     document.querySelectorAll('input, select, textarea').forEach(inp => {
         if (!inp.name && !inp.id) return; 
+        if (inp.id === 'importJsonFile') return; // Überspringe das Import-Feld
         
         if (inp.type === 'file') {
             var fileKey = (inp.id || inp.name) + '_filename';
@@ -263,28 +276,19 @@ function loadForm() {
         if (key.startsWith('top_')) storedTopologyIPs[key] = data[key];
     }
 
-    // --- PASS 1: Initialize static DOM state ---
     applyDataToForm(data);
-
-    // --- PASS 2: Trigger structure-generating functions ---
     updateControlUnitSoftware(); 
     handleInfoCategoryChange(); 
-    
-    // --- PASS 3: Re-apply to populate newly generated radio/selects ---
     applyDataToForm(data);
 
-    // --- PASS 4: Generate dynamic lists ---
     generateExteriorSigns();
     generateInteriorSigns();
     generateInfotainment();
     generateCctvCameras();
 
-    // --- PASS 5: Populate all dynamically generated fields ---
     applyDataToForm(data);
 
-    // --- PASS 6: Trigger visibility and conditional logic everywhere ---
     toggleVoltageOther();
-
     handleCuSoftwareChange();
     checkCuProtocols();
     toggleCuConfigText();
@@ -315,7 +319,6 @@ function loadForm() {
     handleSwitchType();
     handleCamNetMode();
 
-    // Restore Sidebar Status
     for(let i=1; i<=12; i++) {
         let cb = document.getElementById('active_' + i);
         if(cb) toggleSectionState(i, cb);
@@ -335,7 +338,7 @@ function clearForm() {
 // Debouncing Event Listener
 let debounceTimer;
 document.getElementById('configForm').addEventListener('input', function(e) {
-    if(e.target.classList.contains('error-highlight') && e.target.checkValidity()) {
+    if(e.target.classList.contains('error-highlight') && e.target.validity.valid) {
         e.target.classList.remove('error-highlight');
     }
     clearTimeout(debounceTimer);
@@ -343,7 +346,9 @@ document.getElementById('configForm').addEventListener('input', function(e) {
 });
 
 document.getElementById('configForm').addEventListener('change', function(e) {
-    if(e.target.classList.contains('error-highlight') && e.target.checkValidity()) {
+    if (e.target.id === 'importJsonFile') return; // Wichtig für Fall 2!
+    
+    if(e.target.classList.contains('error-highlight') && e.target.validity.valid) {
         e.target.classList.remove('error-highlight');
     }
     clearTimeout(debounceTimer);
