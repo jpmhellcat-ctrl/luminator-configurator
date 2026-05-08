@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mobile Configuration Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<form id="configForm" class="dashboard-layout" onsubmit="handleSubmission(event)">
+    
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2>Mobile Configurator</h2>
+        </div>
+        <ul class="nav-list">
+            <li class="nav-item active" onclick="showStep(1)" id="nav_1">1. Contact & Customer <span class="status-dot" id="status_1">🔴</span></li>
+            <li class="nav-item" onclick="showStep(2)" id="nav_2">2. Vehicle <span class="status-dot" id="status_2">🔴</span></li>
+            <li class="nav-item" onclick="showStep(3)" id="nav_3">3. Backend <span class="status-dot" id="status_3">🔴</span></li>
+            <li class="nav-item" onclick="showStep(4)" id="nav_4">4. Control Units <span class="status-dot" id="status_4">🔴</span></li>
+            <li class="nav-item" onclick="showStep(5)" id="nav_5">5. Exterior Signs <span class="status-dot" id="status_5">🔴</span></li>
+            <li class="nav-item" onclick="showStep(6)" id="nav_6">6. Interior Sign <span class="status-dot" id="status_6">🔴</span></li>
+            <li class="nav-item" onclick="showStep(7)" id="nav_7">7. Infotainment <span class="status-dot" id="status_7">🔴</span></li>
+            <li class="nav-item" onclick="showStep(8)" id="nav_8">8. CCTV <span class="status-dot" id="status_8">🔴</span></li>
+            <li class="nav-item" onclick="showStep(9)" id="nav_9">9. Network Topology <span class="status-dot" id="status_9">🔴</span></li>
+            <li class="nav-item" onclick="showStep(10)" id="nav_10">10. FTP <span class="status-dot" id="status_10">🟢</span></li>
+            <li class="nav-item" onclick="showStep(11)" id="nav_11">11. Dates <span class="status-dot" id="status_11">🔴</span></li>
+            <li class="nav-item" onclick="showStep(12)" id="nav_12">12. Notes <span class="status-dot" id="status_12">🟢</span></li>
+        </ul>
+        <div class="sidebar-footer no-pdf-print">
+            <button type="submit" class="sidebar-btn btn-pdf">✓ Generate PDF & ZIP</button>
+            <button type="button" class="sidebar-btn btn-export" onclick="exportJSON()">💾 Export Config (.json)</button>
+            <button type="button" class="sidebar-btn btn-import" onclick="document.getElementById('importJsonFile').click()">📂 Import Config</button>
+            <input type="file" id="importJsonFile" accept=".json" style="display:none;" onchange="importJSON(event)">
+            <button type="button" class="sidebar-btn btn-clear" onclick="clearForm()">🗑 Clear Form</button>
+        </div>
+    </div>
+
+    <button type="button" class="menu-toggle-btn no-pdf-print" id="menuToggle" onclick="toggleSidebar()" title="Menü ein/ausklappen">☰</button>
+
+    <div class="main-content" id="main-content">
+
+        <div class="top-navigation no-pdf-print">
+            <button type="button" class="nav-btn" id="btnPrevTop" onclick="changeStep(-1)">◀ Previous</button>
+            <button type="button" class="nav-btn" id="btnNextTop" onclick="changeStep(1)">Next ▶</button>
+        </div>
+
+        <div id="step_1" class="step active-step">
+            <div class="step-header">
+                <h2 class="step-title">1. Contact & Customer</h2>
+                <label class="step-toggle"><input type="checkbox" id="active_1" name="active_1" checked onchange="toggleSectionState(1, this)"> Section Active</label>
+            </div>
+            <div class="step-body" id="content_1">
+                <div class="form-row">
+                    <div class="form-group"><label class="required" for="customer">PTO</label><input type="text" id="customer" name="customer" required></div>
+                    <div class="form-group"><label class="required" for="customerNo">Business Partner Number</label><input type="text" id="customerNo" name="customerNo" required></div>
+                    <div class="form-group"><label class="required" for="transportAssoc">PTA</label><input type="text" id="transportAssoc" name="transportAssoc" required></div>
+                    <div class="form-group"><label class="required" for="city">City</label><input type="text" id="city" name="city" required></div>
+                    <div class="form-group"><label for="email">Email</label><input type="email" id="email" name="email"></div>
+                    <div class="form-group"><label for="phone">Phone</label><input type="tel" id="phone" name="phone"></div>
+                    <div class="form-group"><label class="required" for="ticketNo">Order / Ticket No.</label><input type="text" id="ticketNo" name="ticketNo" required></div>
+                    <div class="form-group"><label for="projectNo">Project Number</label><input type="text" id="projectNo" name="projectNo"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="step_2" class="step">
+            <div class="step-header">
+                <h2 class="step-title">2. Vehicle</h2>
+                <label class="step-toggle"><input type="checkbox" id="active_2" name="active_2" checked onchange="toggleSectionState(2, this)"> Section Active</label>
+            </div>
+            <div class="step-body" id="content_2">
+                <div class="form-row">
+                    <div class="form-group"><label for="vehicleType">Vehicle Type</label><input type="text" id="vehicleType" name="vehicleType"></div>
+                    <div class="form-group"><label for="busNumber">Bus Number</label><input type="text" id="busNumber" name="busNumber"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Voltage</label>
+                        <div class="checkbox-group">
+                            <label><input type="radio" id="vehVolt12" name="vehicleVoltage" value="12V" onchange="toggleVoltageOther()"> 12V</label>
+                            <label><input type="radio" id="vehVolt24" name="vehicleVoltage" value="24V" onchange="toggleVoltageOther()"> 24V</label>
+                            <label><input type="radio" id="vehVoltElec" name="vehicleVoltage" value="Electric" onchange="toggleVoltageOther()"> Electric</label>
+                            <label><input type="radio" id="vehVoltOth" name="vehicleVoltage" value="Other" onchange="toggleVoltageOther()"> Other</label>
+                        </div>
+                    </div>
+                    <div class="form-group conditional-group" id="voltageOtherGroup" style="display: none; margin-top: 0;">
+                        <label for="voltageOtherText">Please specify Voltage:</label>
+                        <input type="text" id="voltageOtherText" name="voltageOtherText" placeholder="Enter voltage...">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="step_3" class="step">
+            <div class="step-header">
+                <h2 class="step-title">3. Backend</h2>
+                <label class="step-toggle"><input type="checkbox" id="active_3" name="active_3" checked onchange="toggleSectionState(3, this)"> Section Active</label>
+            </div>
+            <div class="step-body" id="content_3">
+                <div class="form-group">
+                    <label class="required">Exterior Signs</label>
+                    <div class="checkbox-group">
+                        <label><input type="radio" id="beExtIC" name="backendExterior" value="iCenter" required> iCenter</label>
+                        <label><input type="radio" id="beExtLUS" name="backendExterior" value="Luminator Suite"> Luminator Suite</label>
+                        <label><input type="radio" id="beExtLawo" name="backendExterior" value="Lawo"> Lawo</label>
+                        <label><input type="radio" id="beExtMAW" name="backendExterior" value="MAW"> MAW</label>
+                    </div>
+                </div>
+                <hr style="border: 0; border-top: 1px solid #ccc; margin: 15px 0;">
+                <div class="form-group">
+                    <label class="required">TFT</label>
+                    <div class="checkbox-group">
+                        <label><input type="radio" id="beTftIC" name="backendTFT" value="iCenter" required> iCenter</label>
+                        <label><input type="radio" id="beTftLUS" name="backendTFT" value="Luminator Suite"> Luminator Suite</label>
+                        <label><input type="radio" id="beTftLawo" name="backendTFT" value="Lawo"> Lawo</label>
+                        <label><input type="radio" id="beTftMAW" name="backendTFT" value="MAW"> MAW</label>
+                    </div>
+                </div>
+                <hr style="border: 0; border-top: 1px solid #ccc; margin: 15px 0;">
+                <div class="form-group">
+                    <label class="required">CCTV</label>
+                    <div class="checkbox-group">
+                        <label><input type="radio" id="beCctvYes" name="backendCCTV" value="Yes" required> Yes</label>
+                        <label><input type="radio" id="beCctvNo" name="backendCCTV" value="No"> No</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="step_4" class="step">
+            <div class="step-header">
+                <h2 class="step-title">4. Control Units</h2>
+                <label class="step-toggle"><input type="checkbox" id="active_4" name="active_4" checked onchange="toggleSectionState(4, this)"> Section Active</label>
+            </div>
+            <div class="step-body" id="content_4">
+                <div class="form-group">
+                    <label class="required">Select Control Unit</label>
+                    <div class="checkbox-group">
+                        <label><input type="radio" id="cuICU602" name="controlUnit" value="ICU602" onchange="updateControlUnitSoftware()" required> ICU602</label>
+                        <label><input type="radio" id="cuICU602i" name="controlUnit" value="ICU602i" onchange="updateControlUnitSoftware()" required> ICU602i</label>
+                        <label><input type="radio" id="cuICU403" name="controlUnit" value="ICU403" onchange="updateControlUnitSoftware()" required> ICU403</label>
+                        <label><input type="radio" id="cuBasic" name="controlUnit" value="CU.Basic/L5813A" onchange="updateControlUnitSoftware()" required> CU.Basic/L5813A</label>
+                        <label><input type="radio" id="cuProsys1" name="controlUnit" value="Prosys 1" onchange="updateControlUnitSoftware()" required> Prosys 1</label>
+                        <label><input type="radio" id="cuProsys2" name="controlUnit" value="Prosys 2" onchange="updateControlUnitSoftware()" required> Prosys 2</label>
+                        <label><input type="radio" id="cuOther" name="controlUnit" value="Other" onchange="updateControlUnitSoftware()" required> Other</label>
+                        <label><input type="radio" id="cuNone" name="controlUnit" value="None" onchange="updateControlUnitSoftware()" required> None</label>
+                    </div>
+                </div>
+                <div class="form-group conditional-group" id="cuOtherGroup" style="display: none;">
+                    <label class="required" for="cuOtherText">Please specify Control Unit:</label>
+                    <input type="text" id="cuOtherText" name="cuOtherText" placeholder="Enter Control Unit name...">
+                </div>
+                <div class="form-group conditional-group" id="cuSoftwareGroup" style="display: none;">
+                    <label class="required">Control Unit Software</label>
+                    <div class="checkbox-group" id="cuSoftwareOptions"></div>
+                </div>
+                <div class="form-group">
+                    <label for="obuField">OBU</label>
+                    <input type="text" id="obuField" name="obuField" placeholder="Enter OBU details...">
+                </div>
+                <div class="form-group conditional-group" id="cuNetModeGroup" style="display: none; border-left-color: #17a2b8;">
+                    <label class="required">Network Mode</label>
+                    <div class="checkbox-group">
+                        <label><input type="radio" id="cuNetModeFix" name="cuNetMode" value="Fixed" onchange="handleCuNetMode()"> Fixed IP</label>
+                        <label><input type="radio" id="cuNetModeDhcp" name="cuNetMode" value="DHCP" onchange="handleCuNetMode()"> DHCP</label>
+                    </div>
+                </div>
+                <div class="form-group conditional-group cu-ip-address-group" id="cuIpGroup" style="display: none; border-left-color: #17a2b8; margin-top: 0;">
+                    <label class="required" id="cuIpLabel" for="cuIP">Control Unit IP</label>
+                    <input type="text" id="cuIP" name="cuIP" placeholder="e.g. 192.168.1.10" pattern="^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$" oninput="syncTopologyValue(this.id)">
+                </div>
+
+                <div class="form-group conditional-group protocol-group" id="cuProtocolsGroup" style="display: none;">
+                    <label>Protocols</label>
+                    <div class="checkbox-list-vertical">
+                        <label><input type="checkbox" id="cuProtVDV300" name="cuProtocol" value="VDV 300" onchange="checkCuProtocols()"> VDV 300 (IBIS)</label>
+                        <label><input type="checkbox" id="cuProtVDV301" name="cuProtocol" value="VDV 301" onchange="checkCuProtocols()"> VDV 301 (IBIS-IP)</label>
+                        <label><input type="checkbox" id="cuProtITxPT" name="cuProtocol" value="ITxPT" onchange="checkCuProtocols()"> ITxPT</label>
+                        <label><input type="checkbox" id="cuProtArriva" name="cuProtocol" value="Arriva train"> Arriva train specific ITxPT</label>
+                        <label><input type="checkbox" id="cuProtISI" name="cuProtocol" value="ISI Protocol"> ISI Protocol</label>
+                        <label><input type="checkbox" id="cuProtSOAP" name="cuProtocol" value="SOAP IBIS Plus"> SOAP IBIS Plus</label>
+                        <label><input type="checkbox" id="cuProtPaCIM" name="cuProtocol" value="PaCIM"> PaCIM (Real-time)</label>
+                        <label><input type="checkbox" id="cuProtXimple" name="cuProtocol" value="Ximple"> Ximple</label>
+                        <label><input type="checkbox" id="cuProtSNTP" name="cuProtocol" value="SNTP" onchange="checkCuProtocols()"> SNTP</label>
+                        <label><input type="checkbox" id="cuProtVIMI" name="cuProtocol" value="VIMI 2"> VIMI 2</label>
+                        <label><input type="checkbox" id="cuProtMqttUrl" name="cuProtocol" value="MQTT-URL" onchange="checkCuProtocols()"> MQTT-URL</label>
+                        <label><input type="checkbox" id="cuProtMqttPis" name="cuProtocol" value="MQTT-PIS" onchange="checkCuProtocols()"> MQTT-PIS</label>
+                        <label><input type="checkbox" id="cuProtHtmlDisp" name="cuProtocol" value="HTML Display Services" onchange="checkCuProtocols()"> HTML Display Services</label>
+                    </div>
+                </div>
+
+                <div class="form-group sub-conditional-group" id="cuVdv300TelegramsGroup" style="display: none;">
+                    <label>IBIS Telegrams</label>
+                    <div class="scrollable-checkboxes checkbox-list-vertical" id="cuIbisList"></div>
+                </div>
+                <div class="form-group sub-conditional-group" id="cuVdv301XmlGroup" style="display: none;">
+                    <label for="cuVdv301XmlFile">Upload XML File for VDV 301</label>
+                    <input type="file" id="cuVdv301XmlFile" name="cuVdv301XmlFile" accept=".xml" class="file-drop-zone">
+                </div>
+                <div class="form-group sub-conditional-group" id="cuItxptGroup" style="display: none;">
+                    <label for="cuItxptFile">Upload ITxPT Document</label>
+                    <input type="file" id="cuItxptFile" name="cuItxptFile" accept=".pdf,.doc,.docx" class="file-drop-zone">
+                </div>
+                <div class="form-group sub-conditional-group" id="cuSntpTextGroup" style="display: none;">
+                    <label class="required" for="cuSntpDetails">SNTP Details</label>
+                    <input type="text" id="cuSntpDetails" name="cuSntpDetails">
+                </div>
+                <div class="form-group sub-conditional-group" id="cuMqttUrlGroup" style="display: none;">
+                    <label class="required" for="cuMqttUrlDetails">MQTT-URL Details</label>
+                    <input type="text" id="cuMqttUrlDetails" name="cuMqttUrlDetails">
+                </div>
+                <div class="form-group sub-conditional-group" id="cuMqttPisGroup" style="display: none;">
+                    <label class="required" for="cuMqttPisDetails">MQTT-PIS Details</label>
+                    <input type="text" id="cuMqttPisDetails" name="cuMqttPisDetails">
+                </div>
+                <div class="form-group sub-conditional-group" id="cuHtmlDisplayGroup" style="display: none;">
+                    <label class="required" for="cuHtmlDisplayDetails">HTML Display Services Details</label>
+                    <input type="text" id="cuHtmlDisplayDetails" name="cuHtmlDisplayDetails">
+                </div>
+
+                <div class="form-group conditional-group" id="cuConfigExistsGroup" style="display: none; border-left-color: #ff9800;">
+                    <label class="required">Configuration Exists for Control Unit?</label>
+                    <div class="checkbox-group">
+                        <label><input type="radio" id="cuConfigYes" name="cuConfigExists" value="Yes" onchange="toggleCuConfigText()"> Yes</label>
+                        <label><input type="radio" id="cuConfigNo" name="cuConfigExists" value="No" onchange="toggleCuConfigText()"> No</label>
+                    </div>
+                </div>
+                <div class="form-group sub-conditional-group" id="cuConfigTextGroup" style="display: none; border-left-color: #ff9800;">
+                    <label class="required" for="cuConfigName">Please specify existing configuration details:</label>
+                    <input type="text" id="cuConfigName" name="cuConfigName" placeholder="Enter configuration name or details...">
+                </div>
+            </div>
+        </div>
+
+        <div id="step_5" class="step">
+            <div class="step-header">
+                <h2 class="step-title">5. Exterior Signs</h2>
+                <label class="step-toggle"><input type="checkbox" id="active_5" name="active_5" checked onchange="toggleSectionState(5, this)"> Section Active</label>
+            </div>
+            <div class="step-body" id="content_5">
+                <div class="form-group">
+                    <label class="sec5-req-label required">Communication Protocol</label>
+                    <div class="checkbox-group">
+                        <label><input type="radio" id="extProtRS485" class="sec5-req" name="extProtocol" value="RS485" onchange="toggleExtOS()" required> RS485</label>
+                        <label><input type="radio" id="extProtRS232" class="sec5-req" name="extProtocol" value="RS232" onchange="toggleExtOS()" required> RS232</label>
+                        <label><input type="radio" id="extProtMONO" class="sec5-req" name="extProtocol" value="MONO" onchange="toggleExtOS()" required> MONO</label>
+                        <label id="extEthOptionLabel"><input type="radio" id="extProtEth" class="sec5-req" name="extProtocol" value="Ethernet" onchange="toggleExtOS()" required> Ethernet</label>
+                    </div>
+                </div>
+                <div class="form-group conditional-group" id="extOSGroup" style="display: none;">
+                    <label class="sec5-req-label required" for="extOS">OS</label>
+                    <select id="extOS" class="sec5-req" name="extOS">
+                        <option value="">-- Please Select --</option>
+                        <option value="FoxOS">FoxOS</option>
+                        <option value="Imotion">Imotion</option>
+                        <option value="LUS">LUS</option>
+                        <option value="Futura">Futura</option>
+                    </select>
+                </div>
+                <div class="form-group conditional-group" id="extNetModeGroup" style="display: none; border-left-color: #17a2b8;">
+                    <label class="sec5-req-label required">Network Mode</label>
+                    <div class="checkbox-group">
+                        <label><input type="radio" id="extNetModeFix" name="extNetMode" value="Fixed" onchange="handleExtNetMode()"> Fixed IP</label>
+                        <label><input type="radio" id="extNetModeDhcp" name="extNetMode" value="DHCP" onchange="handleExtNetMode()"> DHCP</label>
+                    </div>
+                </div>
+                <div class="form-group conditional-group" id="extVdv301XmlGroup" style="display: none;">
+                    <label for="extVdv301XmlFile">If VDV301 → CIS XML needed (Upload File)</label>
+                    <input type="file" id="extVdv301XmlFile" name="extVdv301XmlFile" accept=".xml" class="file-drop-zone">
+                </div>
+                <hr style="border: 0; border-top: 1px solid #ccc; margin: 25px 0;">
+                <div class="form-group">
+                    <label class="sec5-req-label required" for="extSignCount">How many exterior signs do you need? (1-15)</label>
+                    <select id="extSignCount" name="extSignCount" class="sec5-req" onchange="generateExteriorSigns()" required>
+                        <option value="0">-- Please Select --</option>
+                    </select>
+                </div>
+                <div id="dynamicSignsContainer"></div>
+                <hr style="border: 0; border-top: 1px solid #ccc; margin: 25px 0;">
+                <div class="form-group" style="margin-top: 15px;">
+                    <label class="required">Configuration Exists?</label>
+                    <div class="checkbox-group">
+                        <label><input type="radio" id="extConfigYes" name="extConfigExists" value="Yes" onchange="toggleExtConfigText()" required> Yes</label>
+                        <label><input type="radio" id="extConfigNo" name="extConfigExists" value="No" onchange="toggleExtConfigText()"> No</label>
+                    </div>
+                </div>
+                <div class="form-group conditional-group" id="extConfigTextGroup" style="display: none;">
+                    <label class="required" for="extConfigName">Please specify configuration details:</label>
+                    <input type="text" id="extConfigName" name="extConfigName" placeholder="Enter configuration name or details...">
+                </div>
+            </div>
+        </div>
+
+        <div id="step_6" class="step">
+            <div class="step-header">
+                <h2 class="step-title">6. Interior Sign</h2>
+                <label class="step-toggle"><input type="checkbox" id="active_6" name="active_6" checked onchange="toggleSectionState(6, this)"> Section Active</label>
+            </div>
+            <div class="step-body" id="content_6">
+                <div class="form-row">
+                    <div class="form-group"><label for="intLanguage">Language</label><input type="text" id="intLanguage" name="intLanguage" placeholder="e.g. English, German..."></div>
+                    <div class="form-group"><label>Stoptext Type</label>
+                        <div class="checkbox-group">
+                            <label><input type="radio" id="intStopAlt" name="intStoptextType" value="Alternating"> Alternating</label>
+                            <label><input type="radio" id="intStopFix" name="intStoptextType" value="Fix"> Fix</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group"><label for="intStoptext">Stoptext Details</label><input type="text" id="intStoptext" name="intStoptext" placeholder="Enter Stoptext content..."></div>
+                <hr style="border: 0; border-top: 1px solid #eee; margin: 15px 0;">
+                <div class="form-group">
+                    <label class="sec6-req-label required">Communication Protocol</label>
+                    <div class="checkbox-group">
+                        <label><input type="radio" id="intProtRS485" class="sec6-req" name="intProtocol" value="RS485" onchange="handleIntProtocolChange()" required> RS485</label>
+                        <label><input type="radio" id="intProtIBIS" class="sec6-req" name="intProtocol" value="IBIS" onchange="handleIntProtocolChange()" required> IBIS</label>
+                        <label id="intEthOptionLabel"><input type="radio" id="intProtEth" class="sec6-req" name="intProtocol" value="Ethernet" onchange="handleIntProtocolChange()" required> Ethernet</label>
+                    </div>
+                </div>
+                <div class="form-group conditional-group" id="intOSGroup" style="display: none;">
+                    <label class="sec6-req-label required" for="intOS">OS</label>
+                    <select id="intOS" class="sec6-req" name="intOS">
+                        <option value="">-- Please Select --</option>
+                        <option value="FoxOS">FoxOS</option>
+                        <option value="Imotion">Imotion</option>
+                        <option value="LUS">LUS</option>
+                        <option value="Futura">Futura</option>
+                    </select>
+                </div>
+                <div class="form-group conditional-group" id="intNetModeGroup" style="display: none; border-left-color: #17a2b8;">
+                    <label class="sec6-req-label required">Network Mode</label>
+                    <div class="checkbox-group">
+                        <label><input type="radio" id="intNetModeFix" name="intNetMode" value="Fixed" onchange="handleIntNetMode()"> Fixed IP</label>
+                        <label><input type="radio" id="intNetModeDhcp" name="intNetMode" value="DHCP" onchange="handleIntNetMode()"> DHCP</label>
+                    </div>
+                </div>
+                <div class="form-group conditional-group" id="intIbisTelegramsGroup" style="display: none;">
+                    <label class="sec6-req-label">IBIS Telegrams</label>
+                    <div class="scrollable-checkboxes checkbox-list-vertical">
+                        <label><input type="checkbox" id="intIbisDS001" name="intIbisTelegram_DS001" value="DS001"> DS001</label>
+                        <label><input type="checkbox" id="intIbisDS002" name="intIbisTelegram_DS002" value="DS002"> DS002</label>
+                        <label><input type="checkbox" id="intIbisDS003c" name="intIbisTelegram_DS003c" value="DS003c"> DS003c</label>
+                        <label><input type="checkbox" id="intIbisDS004" name="intIbisTelegram_DS004" value="DS004"> DS004</label>
+                        <label><input type="checkbox" id="intIbisDS009" name="intIbisTelegram_DS009" value="DS009"> DS009</label>
+                        <label><input type="checkbox" id="intIbisDS021a" name="intIbisTelegram_DS021a" value="DS021a"> DS021a</label>
+                        <label><input type="checkbox" id="intIbisDS021c" name="intIbisTelegram_DS021c" value="DS021c"> DS021c</label>
+                    </div>
+                </div>
+                <hr style="border: 0; border-top: 1px solid #ccc; margin: 25px 0;">
+                <div class="form-group">
+                    <label class="sec6-req-label required" for="intSignCount">How many interior signs do you need? (1-15)</label>
+                    <select id="intSignCount" name="intSignCount" class="sec6-req" onchange="generateInteriorSigns()" required>
+                        <option value="0">-- Please Select --</option>
+                    </select>
+                </div>
+                <div id="dynamicIntSignsContainer"></div>
+                <hr style="border: 0; border-top: 1px solid #ccc; margin: 25px 0;">
+                <div class="form-group" style="margin-top: 15px;">
+                    <label class="required">Configuration Exists?</label>
+                    <div class="checkbox-group">
+                        <label><input type="radio" id="intConfigYes" name="intConfigExists" value="Yes" onchange="toggleIntConfigText()" required> Yes</label>
+                        <label><input type="radio" id="intConfigNo" name="intConfigExists" value="No" onchange="toggleIntConfigText()"> No</label>
+                    </div>
+                </div>
+                <div class="form-group conditional-group" id="intConfigTextGroup" style="display: none;">
+                    <label class="required" for="intConfigName">Please specify configuration details:</label>
+                    <input type="text" id="intConfigName" name="intConfigName" placeholder="Enter configuration name or details...">
+                </div>
+            </div>
+        </div>
+
+        <div id="step_7" class="step">
+            <div class="step-header">
+                <h2 class="step-title">7. Infotainment</h2>
+                <label class="step-toggle"><input type="checkbox" id="active_7" name="active_7" checked onchange="toggleSectionState(7, this)"> Section Active</label>
+            </div>
+            <div class="step-body" id="content_7">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="sec7-req-label required">Device Category</label>
+                        <div class="checkbox-group">
+                            <label><input type="radio" id="infoCatProsys" class="sec7-req" name="infoDeviceCategory" value="Prosys" onchange="handleInfoCategoryChange()" required> Prosys</label>
+                            <label><input type="radio" id="infoCatTFT" class="sec7-req" name="infoDeviceCategory" value="TFT" onchange="handleInfoCategoryChange()" required> TFT</label>
+                        </div>
+                    </div>
+                    <div class="form-group conditional-group" id="infoProsysGroup" style="display: none; margin-top: 0;">
+                        <label class="sec7-req-label required" for="infoProsysVersion">Prosys Version</label>
+                        <select id="infoProsysVersion" class="sec7-req" name="infoProsysVersion">
+                            <option value="">-- Select Prosys --</option>
+                            <option value="Prosys 1">Prosys 1</option>
+                            <option value="Prosys 2">Prosys 2</option>
+                        </select>
+                    </div>
+                    <div class="form-group conditional-group" id="infoProcessorGroup" style="display: none; margin-top: 0;">
+                        <label class="sec7-req-label required" for="infoProcessor">Processor</label>
+                        <select id="infoProcessor" class="sec7-req" name="infoProcessor" onchange="updateInfoOSOptions()">
+                            <option value="">-- Select Processor --</option>
+                            <option value="Q7imx6">Q7imx6</option>
+                            <option value="Q7x86">Q7x86</option>
+                            <option value="SMARC/x86">SMARC/x86</option>
+                            <option value="SMARC/imx8m">SMARC/imx8m</option>
+                            <option value="Slave">Slave</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group" id="infoOSContainer">
+                    <label class="sec7-req-label required" for="infoOS">OS</label>
+                    <select id="infoOS" class="sec7-req" name="infoOS" onchange="updateInfoDeviceTypes()" required>
+                        <option value="">-- Select OS --</option>
+                    </select>
+                </div>
+                <hr id="infoProtocolsDivider" style="border: 0; border-top: 1px solid #ccc; margin: 25px 0;">
+                <div class="form-group conditional-group" id="infoNetModeGroup" style="display: block; border-left-color: #17a2b8;">
+                    <label class="sec7-req-label required">Network Mode</label>
+                    <div class="checkbox-group">
+                        <label><input type="radio" id="infoNetModeFix" name="infoNetMode" value="Fixed" onchange="handleInfoNetMode()"> Fixed IP</label>
+                        <label><input type="radio" id="infoNetModeDhcp" name="infoNetMode" value="DHCP" onchange="handleInfoNetMode()"> DHCP</label>
+                    </div>
+                </div>
+                <div class="form-group conditional-group protocol-group" id="infoProtocolsContainer" style="display: block;">
+                    <label class="sec7-req-label required">Protocols</label>
+                    <div class="checkbox-list-vertical">
+                        <label><input type="checkbox" id="infoProtVDV300" name="infoProtocol" value="VDV 300" onchange="handleInfoProtocols()"> VDV 300 (IBIS)</label>
+                        <label><input type="checkbox" id="infoProtVDV301" name="infoProtocol" value="VDV 301" onchange="handleInfoProtocols()"> VDV 301 (IBIS-IP)</label>
+                        <label><input type="checkbox" id="infoProtITxPT" name="infoProtocol" value="ITxPT" onchange="handleInfoProtocols()"> ITxPT</label>
+                        <label><input type="checkbox" id="infoProtArriva" name="infoProtocol" value="Arriva train"> Arriva train specific ITxPT</label>
+                        <label><input type="checkbox" id="infoProtISI" name="infoProtocol" value="ISI Protocol"> ISI Protocol</label>
+                        <label><input type="checkbox" id="infoProtSOAP" name="infoProtocol" value="SOAP IBIS Plus"> SOAP IBIS Plus</label>
+                        <label><input type="checkbox" id="infoProtPaCIM" name="infoProtocol" value="PaCIM"> PaCIM (Real-time)</label>
+                        <label><input type="checkbox" id="infoProtXimple" name="infoProtocol" value="Ximple"> Ximple</label>
+                        <label><input type="checkbox" id="infoProtSNTP" name="infoProtocol" value="SNTP" onchange="handleInfoProtocols()"> SNTP</label>
+                        <label><input type="checkbox" id="infoProtVIMI" name="infoProtocol" value="VIMI 2"> VIMI 2</label>
+                        <label><input type="checkbox" id="infoProtMqttUrl" name="infoProtocol" value="MQTT-URL" onchange="handleInfoProtocols()"> MQTT-URL</label>
+                        <label><input type="checkbox" id="infoProtMqttPis" name="infoProtocol" value="MQTT-PIS" onchange="handleInfoProtocols()"> MQTT-PIS</label>
+                        <label><input type="checkbox" id="infoProtHtmlDisp" name="infoProtocol" value="HTML Display Services" onchange="handleInfoProtocols()"> HTML Display Services</label>
+                    </div>
+                </div>
+                <div class="form-group sub-conditional-group" id="infoVdv300TelegramsGroup" style="display: none;">
+                    <label>IBIS Telegrams</label>
+                    <div class="scrollable-checkboxes checkbox-list-vertical" id="infoIbisList"></div>
+                </div>
+                <div class="form-group sub-conditional-group" id="infoVdv301XmlGroup" style="display: none;">
+                    <label for="infoVdv301XmlFile">Upload XML File for VDV 301</label>
+                    <input type="file" id="infoVdv301XmlFile" name="infoVdv301XmlFile" accept=".xml" class="file-drop-zone">
+                </div>
+                <div class="form-group sub-conditional-group" id="infoItxptGroup" style="display: none;">
+                    <label for="infoItxptFile">Upload ITxPT Document</label>
+                    <input type="file" id="infoItxptFile" name="infoItxptFile" accept=".pdf,.doc,.docx" class="file-drop-zone">
+                </div>
+                <div class="form-group sub-conditional-group" id="infoSntpTextGroup" style="display: none;">
+                    <label class="required" for="infoSntpDetails">SNTP Details</label>
+                    <input type="text" id="infoSntpDetails" name="infoSntpDetails" placeholder="Enter details...">
+                </div>
+                <div class="form-group sub-conditional-group" id="infoMqttUrlGroup" style="display: none;">
+                    <label class="required" for="infoMqttUrlDetails">MQTT-URL Details</label>
+                    <input type="text" id="infoMqttUrlDetails" name="infoMqttUrlDetails">
+                </div>
+                <div class="form-group sub-conditional-group" id="infoMqttPisGroup" style="display: none;">
+                    <label class="required" for="infoMqttPisDetails">MQTT-PIS Details</label>
+                    <input type="text" id="infoMqttPisDetails" name="infoMqttPisDetails">
+                </div>
+                <div class="form-group sub-conditional-group" id="infoHtmlDisplayGroup" style="display: none;">
+                    <label class="required" for="infoHtmlDisplayDetails">HTML Display Services Details</label>
+                    <input type="text" id="infoHtmlDisplayDetails" name="infoHtmlDisplayDetails">
+                </div>
+                <hr style="border: 0; border-top: 1px solid #ccc; margin: 25px 0;">
+                <div class="form-group">
+                    <label class="sec7-req-label required" for="infoCount">How many infotainment signs do you need? (1-8)</label>
+                    <select id="infoCount" name="infoCount" class="sec7-req" onchange="generateInfotainment()" required>
+                        <option value="0">-- Please Select --</option>
+                    </select>
+                </div>
+                <div id="dynamicInfoContainer"></div>
+                <hr style="border: 0; border-top: 1px solid #ccc; margin: 25px 0;">
+                <div class="form-group" style="margin-top: 15px;">
+                    <label class="required">Configuration Exists?</label>
+                    <div class="checkbox-group">
+                        <label><input type="radio" id="infoConfigYes" name="infoConfigExists" value="Yes" onchange="toggleInfoConfigText()" required> Yes</label>
+                        <label><input type="radio" id="infoConfigNo" name="infoConfigExists" value="No" onchange="toggleInfoConfigText()"> No</label>
+                    </div>
+                </div>
+                <div class="form-group conditional-group" id="infoConfigTextGroup" style="display: none;">
+                    <label class="required" for="infoConfigName">Please specify configuration details:</label>
+                    <input type="text" id="infoConfigName" name="infoConfigName" placeholder="Enter configuration name or details...">
+                </div>
+                <div class="form-group conditional-group" id="infoConfigNoGroup" style="display: none;">
+                    <label>No configuration exists. Upload pictures/documents:</label>
+                    <input type="file" id="infoConfigUpload" name="infoConfigUpload" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" multiple class="file-drop-zone">
+                </div>
+            </div>
+        </div>
+
+        <div id="step_8" class="step">
+            <div class="step-header">
+                <h2 class="step-title">8. CCTV</h2>
+                <label class="step-toggle"><input type="checkbox" id="active_8" name="active_8" checked onchange="toggleSectionState(8, this)"> Section Active</label>
+            </div>
+            <div class="step-body" id="content_8">
+                <div class="form-row">
+                    <div class="form-group"><label class="required">System</label>
+                        <div class="checkbox-group">
+                            <label><input type="radio" id="cctvSysVivo" name="cctvSystem" value="Vivotek" onchange="toggleCctvSystemHint()" required> Vivotek</label>
+                            <label><input type="radio" id="cctvSysNVM" name="cctvSystem" value="NVM" onchange="toggleCctvSystemHint()"> NVM</label>
+                        </div>
+                    </div>
+                    <div class="form-group"><label class="required">Bus Type</label>
+                        <div class="checkbox-group">
+                            <label><input type="radio" id="cctvBusSolo" name="cctvBus" value="Solo" required> Solo</label>
+                            <label><input type="radio" id="cctvBusGelenk" name="cctvBus" value="Gelenk"> Gelenk</label>
+                        </div>
+                    </div>
+                </div>
+                <div id="nvmHint" style="display:none; color: #d9534f; font-size: 0.85em; margin-bottom: 15px; background: #fdfdfd; border: 1px solid #ccc; padding: 10px;">Note: Information for NVM is ongoing; currently covering Vivotek only.</div>
+                <div class="form-row">
+                    <div class="form-group"><label class="required">Use X-Suite?</label>
+                        <div class="checkbox-group">
+                            <label><input type="radio" id="cctvXsYes" name="cctvXsuite" value="Yes" onchange="handleCctvXsuiteChange()" required> Yes</label>
+                            <label><input type="radio" id="cctvXsNo" name="cctvXsuite" value="No" onchange="handleCctvXsuiteChange()"> No</label>
+                        </div>
+                    </div>
+                    <div class="form-group"><label class="required">X-Fleet Manager?</label>
+                        <div class="checkbox-group">
+                            <label><input type="radio" id="cctvXfYes" name="cctvXfleet" value="Yes" required> Yes</label>
+                            <label><input type="radio" id="cctvXfNo" name="cctvXfleet" value="No"> No</label>
+                        </div>
+                    </div>
+                </div>
+                <div id="cctvRecorderPart">
+                    <h4 style="color: var(--primary-color); border-bottom: 1px solid #ddd; margin-top:10px;">Recorder</h4>
+                    <div class="form-row">
+                        <div class="form-group"><label class="required" for="cctvRecType">Type</label>
+                            <select id="cctvRecType" name="cctvRecType"><option value="XDMR IP+">XDMR IP+</option><option value="XDMR IP+NG">XDMR IP+NG</option><option value="Other">Other</option></select>
+                        </div>
+                        <div class="form-group"><label class="required">Network Mode</label>
+                            <div class="checkbox-group">
+                                <label><input type="radio" id="cctvRecNetFix" name="cctvRecNetMode" value="Fixed" onchange="handleCctvRecNetMode()"> Fixed IP</label>
+                                <label><input type="radio" id="cctvRecNetDhcp" name="cctvRecNetMode" value="DHCP" onchange="handleCctvRecNetMode()"> DHCP</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group cctv-rec-ip-group" id="cctvRecIpGroup" style="display:none;"><label class="required" for="cctvRecIP">Recorder IP</label>
+                            <input type="text" id="cctvRecIP" name="cctvRecIP" pattern="^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$" title="Please enter a valid IP address" oninput="syncTopologyValue(this.id)">
+                        </div>
+                    </div>
+                    <div class="form-group"><label class="required" for="cctvRecOrient">Physical Orientation</label>
+                        <select id="cctvRecOrient" name="cctvRecOrient">
+                            <option value="">-- Select Orientation --</option><option value="Front window">Front Window</option><option value="Left side">Left side</option><option value="Right side">Right side</option><option value="Rear">Rear</option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label for="cctvTimeSync">Time Sync Source</label><input type="text" id="cctvTimeSync" name="cctvTimeSync"></div>
+                        <div class="form-group"><label for="cctvGpsSource">GPS Source</label><input type="text" id="cctvGpsSource" name="cctvGpsSource"></div>
+                    </div>
+                    <div class="form-group"><label>Signal for Doors Open</label><div class="checkbox-group"><label><input type="radio" id="doorSigOp" name="doorSignal" value="Open"> Open</label><label><input type="radio" id="doorSigCl" name="doorSignal" value="Close"> Close</label></div></div>
+                </div>
+                <h4 style="color: var(--primary-color); border-bottom: 1px solid #ddd; margin-top: 20px;">Switch</h4>
+                <div class="form-row">
+                    <div class="form-group"><label>Type</label><div class="checkbox-group"><label><input type="radio" id="swUnman" name="switchType" value="Unmanaged" onchange="handleSwitchType()"> Unmanaged</label><label><input type="radio" id="swMan" name="switchType" value="Managed" onchange="handleSwitchType()"> Managed</label></div></div>
+                    <div id="managedSwitchFields" style="display:none; flex: 1;">
+                        <div class="form-group" style="margin-bottom:0;"><label for="cctvSwitchPool">DHCP Pool</label><input type="text" id="cctvSwitchPool" name="cctvSwitchPool"></div>
+                    </div>
+                </div>
+                <h4 style="color: var(--primary-color); border-bottom: 1px solid #ddd; margin-top: 20px;">Cameras</h4>
+                <div class="form-row">
+                    <div class="form-group"><label class="required">Network Mode</label>
+                        <div class="checkbox-group">
+                            <label><input type="radio" id="camNetFix" name="camNetMode" value="Fixed" onchange="handleCamNetMode()" required> Fixed IP</label>
+                            <label><input type="radio" id="camNetDhcp" name="camNetMode" value="DHCP" onchange="handleCamNetMode()"> DHCP</label>
+                        </div>
+                    </div>
+                    <div class="form-group"><label class="required" for="cctvCamCount">Cam Count</label><select id="cctvCamCount" name="cctvCamCount" onchange="generateCctvCameras()"><option value="0">0</option></select></div>
+                </div>
+                <div id="cctvCamerasContainer"></div>
+                <div class="form-group" style="margin-top: 20px;"><label for="cctvDrawing">System Drawing (Upload)</label><input type="file" id="cctvDrawing" name="cctvDrawing" accept="image/*,.pdf" class="file-drop-zone"></div>
+            </div>
+        </div>
+
+        <div id="step_9" class="step">
+            <div class="step-header">
+                <h2 class="step-title">9. Network Topology</h2>
+                <label class="step-toggle"><input type="checkbox" id="active_9" name="active_9" checked onchange="toggleSectionState(9, this)"> Section Active</label>
+            </div>
+            <div class="step-body" id="content_9">
+                <div class="form-row">
+                    <div class="form-group"><label class="required" for="networkGateway">Gateway</label><input type="text" id="networkGateway" name="networkGateway" placeholder="e.g. 192.168.1.1" pattern="^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$" required></div>
+                    <div class="form-group"><label class="required" for="networkDNS1">DNS 1</label><input type="text" id="networkDNS1" name="networkDNS1" placeholder="e.g. 8.8.8.8" pattern="^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$" required></div>
+                    <div class="form-group"><label for="networkDNS2">DNS 2 (Optional)</label><input type="text" id="networkDNS2" name="networkDNS2" placeholder="e.g. 8.8.4.4" pattern="^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$"></div>
+                    <div class="form-group"><label for="networkOBUIP">OBU IP Address</label><input type="text" id="networkOBUIP" name="networkOBUIP" placeholder="e.g. 192.168.1.5" pattern="^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$"></div>
+                </div>
+                <hr style="border: 0; border-top: 1px solid #ccc; margin: 25px 0;">
+                <h4 style="color: var(--primary-color); margin-top: 0;">Device IP Addresses</h4>
+                <div id="topologyIPsContainer" style="background: #fdfdfd; padding: 15px; border: 1px solid var(--border-color); border-radius: 5px;">
+                    <p style="color:#666; font-size:0.9em; margin: 0;">Configure devices with Fixed IP or DHCP to see them listed here.</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="step_10" class="step">
+            <div class="step-header">
+                <h2 class="step-title">10. FTP (If needed)</h2>
+                <label class="step-toggle"><input type="checkbox" id="active_10" name="active_10" checked onchange="toggleSectionState(10, this)"> Section Active</label>
+            </div>
+            <div class="step-body" id="content_10">
+                <div class="form-row">
+                    <div class="form-group"><label for="ftpName">FTP Name</label><input type="text" id="ftpName" name="ftpName"></div>
+                    <div class="form-group"><label for="ftpServer">Server</label><input type="text" id="ftpServer" name="ftpServer"></div>
+                    <div class="form-group"><label for="ftpLogin">Login</label><input type="text" id="ftpLogin" name="ftpLogin"></div>
+                    <div class="form-group"><label for="ftpPassword">Password</label><input type="password" id="ftpPassword" name="ftpPassword"></div>
+                    <div class="form-group"><label for="ftpIP">Server IP</label><input type="text" id="ftpIP" name="ftpIP" pattern="^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$"></div>
+                    <div class="form-group"><label for="ftpGateway">Gateway</label><input type="text" id="ftpGateway" name="ftpGateway" pattern="^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$"></div>
+                    <div class="form-group"><label for="ftpDirOut">Dir OUT</label><input type="text" id="ftpDirOut" name="ftpDirOut"></div>
+                    <div class="form-group"><label for="ftpDirIn">Dir IN</label><input type="text" id="ftpDirIn" name="ftpDirIn"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="step_11" class="step">
+            <div class="step-header">
+                <h2 class="step-title">11. Dates</h2>
+                <label class="step-toggle"><input type="checkbox" id="active_11" name="active_11" checked onchange="toggleSectionState(11, this)"> Section Active</label>
+            </div>
+            <div class="step-body" id="content_11">
+                <div class="form-row">
+                    <div class="form-group"><label class="required" for="reqDate">Requested Delivery Date</label><input type="date" id="reqDate" name="reqDate" required></div>
+                    <div class="form-group"><label class="required" for="planDate">Planned Delivery Date</label><input type="date" id="planDate" name="planDate" required></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="step_12" class="step">
+            <div class="step-header">
+                <h2 class="step-title">12. Notes</h2>
+                <label class="step-toggle"><input type="checkbox" id="active_12" name="active_12" checked onchange="toggleSectionState(12, this)"> Section Active</label>
+            </div>
+            <div class="step-body" id="content_12">
+                <div class="form-group">
+                    <label for="notes">Notes</label>
+                    <textarea id="notes" name="notes" rows="5" placeholder="Enter any additional notes..."></textarea>
+                </div>
+                <hr style="border: 0; border-top: 1px solid #ccc; margin: 20px 0;">
+                <div class="form-group">
+                    <label for="notesUpload">Additional Documents / Pictures (Drag & Drop)</label>
+                    <input type="file" id="notesUpload" name="notesUpload" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" multiple class="file-drop-zone">
+                </div>
+            </div>
+        </div>
+
+        <div class="step-navigation no-pdf-print">
+            <button type="button" class="nav-btn" id="btnPrev" onclick="changeStep(-1)">◀ Previous Step</button>
+            <button type="button" class="nav-btn" id="btnNext" onclick="changeStep(1)">Next Step ▶</button>
+        </div>
+
+    </div>
+</form>
+
+<div id="printArea"></div>
+
+<script src="script.js"></script>
+
+</body>
+</html>
